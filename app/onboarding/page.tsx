@@ -23,7 +23,7 @@ export default function OnboardingPage() {
   const [current, setCurrent] = useState(0)
   const [answers, setAnswers] = useState<Record<string, number>>({})
   const [currency, setCurrency] = useState<'ARS' | 'USD'>('ARS')
-  const [capital, setCapital] = useState('')
+  const [capital, setCapital] = useState('1000000')
   const [result, setResult] = useState<ProfileResult | null>(null)
 
   function selectOption(score: number) {
