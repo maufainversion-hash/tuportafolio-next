@@ -15,7 +15,7 @@ export default function Navbar() {
             <Link href="/#features" className="text-sm text-text-secondary hover:text-text-primary transition-colors">Funciones</Link>
           </div>
           <div className="hidden md:flex items-center gap-3">
-            <Link href="/login" className="text-sm text-text-secondary hover:text-text-primary px-3 py-2">Iniciar sesi\u00f3n</Link>
+            <Link href="/login" className="text-sm text-text-secondary hover:text-text-primary px-3 py-2">Iniciar sesión</Link>
             <Link href="/register" className="text-sm bg-accent-gold text-bg-base font-semibold px-4 py-2 rounded-btn hover:bg-accent-gold-hover transition-colors">Empezar gratis</Link>
           </div>
           <button onClick={() => setOpen(!open)} className="md:hidden text-text-secondary">
@@ -27,7 +27,7 @@ export default function Navbar() {
       </div>
       {open&&<div className="md:hidden border-t border-border bg-bg-card px-4 py-4 space-y-3">
         <Link href="/#features" className="block text-text-secondary text-sm">Funciones</Link>
-        <Link href="/login" className="block text-text-secondary text-sm">Iniciar sesi\u00f3n</Link>
+        <Link href="/login" className="block text-text-secondary text-sm">Iniciar sesión</Link>
         <Link href="/register" className="block text-center text-sm bg-accent-gold text-bg-base font-semibold px-4 py-2 rounded-btn">Empezar gratis</Link>
       </div>}
     </nav>
