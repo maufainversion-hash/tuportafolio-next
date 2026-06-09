@@ -1,0 +1,111 @@
+import type { InvestorProfile } from '@/lib/profiler'
+
+export interface AllocationSlot {
+  assetId: string
+  weight: number // percent (15 = 15%)
+  notes?: string
+}
+
+export const ALLOCATIONS_ARS: Record<InvestorProfile, AllocationSlot[]> = {
+  conservador: [
+    { assetId: 'money_market', weight: 15 },
+    { assetId: 'lecap', weight: 20 },
+    { assetId: 'lecap_tamar', weight: 10 },
+    { assetId: 'cer_tx26', weight: 10 },
+    { assetId: 'mep', weight: 15 },
+    { assetId: 'on_pampa', weight: 10 },
+    { assetId: 'on_tgs', weight: 10 },
+    { assetId: 'fci_usd_ahorro', weight: 5 },
+    { assetId: 'spy', weight: 5 },
+  ],
+  estable: [
+    { assetId: 'money_market', weight: 10 },
+    { assetId: 'lecap', weight: 12 },
+    { assetId: 'cer_tx26', weight: 8 },
+    { assetId: 'mep', weight: 10 },
+    { assetId: 'gd30', weight: 10 },
+    { assetId: 'on_pampa', weight: 10 },
+    { assetId: 'on_meli', weight: 8 },
+    { assetId: 'on_telecom', weight: 7 },
+    { assetId: 'spy', weight: 12 },
+    { assetId: 'msft', weight: 8 },
+    { assetId: 'galicia', weight: 5 },
+  ],
+  moderado: [
+    { assetId: 'lecap', weight: 8 },
+    { assetId: 'mep', weight: 7 },
+    { assetId: 'gd30', weight: 10 },
+    { assetId: 'on_ypf', weight: 8 },
+    { assetId: 'on_pampa', weight: 7 },
+    { assetId: 'spy', weight: 15 },
+    { assetId: 'qqq', weight: 10 },
+    { assetId: 'meli', weight: 8 },
+    { assetId: 'msft', weight: 7 },
+    { assetId: 'ypf', weight: 7 },
+    { assetId: 'galicia', weight: 8 },
+    { assetId: 'pampa', weight: 5 },
+  ],
+  agresivo: [
+    { assetId: 'mep', weight: 5 },
+    { assetId: 'gd30', weight: 8 },
+    { assetId: 'on_ypf', weight: 7 },
+    { assetId: 'qqq', weight: 12 },
+    { assetId: 'nvda', weight: 8 },
+    { assetId: 'meli', weight: 10 },
+    { assetId: 'msft', weight: 8 },
+    { assetId: 'meta', weight: 7 },
+    { assetId: 'ypf', weight: 10 },
+    { assetId: 'galicia', weight: 10 },
+    { assetId: 'vist', weight: 8 },
+    { assetId: 'bma', weight: 7 },
+  ],
+}
+
+export const ALLOCATIONS_USD: Record<InvestorProfile, AllocationSlot[]> = {
+  conservador: [
+    { assetId: 'fci_usd_ahorro', weight: 20 },
+    { assetId: 'gd30', weight: 15 },
+    { assetId: 'on_pampa', weight: 15 },
+    { assetId: 'on_tgs', weight: 15 },
+    { assetId: 'on_meli', weight: 10 },
+    { assetId: 'on_arcor', weight: 10 },
+    { assetId: 'spy', weight: 10 },
+    { assetId: 'gld', weight: 5 },
+  ],
+  estable: [
+    { assetId: 'fci_usd_ahorro', weight: 10 },
+    { assetId: 'gd30', weight: 15 },
+    { assetId: 'on_ypf', weight: 12 },
+    { assetId: 'on_pampa', weight: 10 },
+    { assetId: 'on_telecom', weight: 8 },
+    { assetId: 'on_meli', weight: 8 },
+    { assetId: 'spy', weight: 20 },
+    { assetId: 'msft', weight: 10 },
+    { assetId: 'ypf', weight: 7 },
+  ],
+  moderado: [
+    { assetId: 'gd30', weight: 12 },
+    { assetId: 'on_ypf', weight: 10 },
+    { assetId: 'on_pampa', weight: 8 },
+    { assetId: 'spy', weight: 18 },
+    { assetId: 'qqq', weight: 12 },
+    { assetId: 'meli', weight: 10 },
+    { assetId: 'msft', weight: 8 },
+    { assetId: 'nvda', weight: 7 },
+    { assetId: 'ypf', weight: 8 },
+    { assetId: 'galicia', weight: 7 },
+  ],
+  agresivo: [
+    { assetId: 'gd30', weight: 8 },
+    { assetId: 'on_ypf', weight: 7 },
+    { assetId: 'qqq', weight: 15 },
+    { assetId: 'nvda', weight: 10 },
+    { assetId: 'meli', weight: 10 },
+    { assetId: 'msft', weight: 8 },
+    { assetId: 'meta', weight: 8 },
+    { assetId: 'ypf', weight: 10 },
+    { assetId: 'galicia', weight: 10 },
+    { assetId: 'vist', weight: 8 },
+    { assetId: 'bma', weight: 6 },
+  ],
+}

@@ -1,210 +1,323 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import Button from '@/components/ui/Button'
-import { cn } from '@/lib/utils'
-import type { InvestorProfile } from '@/lib/types'
+import { QUESTIONS, calculateProfile, PROFILES, type ProfileResult } from '@/lib/profiler'
+import { buildPortfolio } from '@/lib/portfolio-engine'
 
-const CAPITAL_OPTIONS: { value: InvestorProfile['capital']; label: string; desc: string }[] = [
-  { value: 'menos_10k', label: '< $10K', desc: 'Estás empezando a invertir.' },
-  { value: '10k_50k', label: '$10K - $50K', desc: 'Ya tenés un capital inicial.' },
-  { value: '50k_200k', label: '$50K - $200K', desc: 'Buscás hacer crecer tu patrimonio.' },
-  { value: 'mas_200k', label: '> $200K', desc: 'Gestionás un portafolio significativo.' },
-]
+type Stage = 'intro' | 'questions' | 'capital' | 'loading' | 'result'
 
-const RISK_OPTIONS: { value: InvestorProfile['risk']; label: string; desc: string }[] = [
-  { value: 'conservador', label: 'Conservador', desc: 'Priorizás preservar tu capital sobre el rendimiento.' },
-  { value: 'moderado', label: 'Moderado', desc: 'Buscás un equilibrio entre riesgo y rendimiento.' },
-  { value: 'agresivo', label: 'Agresivo', desc: 'Aceptás más volatilidad a cambio de mayor potencial.' },
-]
-
-const TIMEFRAME_OPTIONS: { value: InvestorProfile['timeframe']; label: string; desc: string }[] = [
-  { value: 'corto', label: 'Corto plazo', desc: 'Menos de 1 año.' },
-  { value: 'mediano', label: 'Mediano plazo', desc: 'Entre 1 y 5 años.' },
-  { value: 'largo', label: 'Largo plazo', desc: 'Más de 5 años.' },
-]
-
-const GOAL_OPTIONS = [
-  { value: 'crecimiento', label: 'Crecimiento de capital' },
-  { value: 'dividendos', label: 'Dividendos' },
-  { value: 'preservar', label: 'Preservar capital' },
-  { value: 'especulacion', label: 'Especulación' },
-  { value: 'aprendizaje', label: 'Aprendizaje' },
-]
-
-const TOTAL_STEPS = 4
+const COLORS = {
+  base: '#050810',
+  card: '#0f1623',
+  blue: '#4fa3ff',
+  gold: '#f0b429',
+  text: '#eef2ff',
+  muted: '#94a3b8',
+  border: '#1e2d42',
+  green: '#22c55e',
+}
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const [step, setStep] = useState(1)
-  const [capital, setCapital] = useState<InvestorProfile['capital'] | null>(null)
-  const [risk, setRisk] = useState<InvestorProfile['risk'] | null>(null)
-  const [timeframe, setTimeframe] = useState<InvestorProfile['timeframe'] | null>(null)
-  const [goals, setGoals] = useState<string[]>([])
+  const [stage, setStage] = useState<Stage>('intro')
+  const [current, setCurrent] = useState(0)
+  const [answers, setAnswers] = useState<Record<string, number>>({})
+  const [currency, setCurrency] = useState<'ARS' | 'USD'>('ARS')
+  const [capital, setCapital] = useState('')
+  const [result, setResult] = useState<ProfileResult | null>(null)
 
-  const canContinue =
-    (step === 1 && capital) ||
-    (step === 2 && risk) ||
-    (step === 3 && timeframe) ||
-    (step === 4 && goals.length > 0)
-
-  function toggleGoal(value: string) {
-    setGoals((prev) => (prev.includes(value) ? prev.filter((g) => g !== value) : [...prev, value]))
-  }
-
-  function handleNext() {
-    if (step < TOTAL_STEPS) {
-      setStep((s) => s + 1)
+  function selectOption(score: number) {
+    const q = QUESTIONS[current]
+    const next = { ...answers, [q.id]: score }
+    setAnswers(next)
+    if (current < QUESTIONS.length - 1) {
+      setCurrent(current + 1)
     } else {
-      // TODO: persist InvestorProfile to Supabase
-      router.push('/dashboard')
+      setStage('capital')
     }
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-bg-base px-4 py-12">
-      <div className="w-full max-w-xl animate-slide-up">
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-text-secondary">Paso {step} de {TOTAL_STEPS}</span>
-            <span className="text-sm font-num text-accent-blue">{Math.round((step / TOTAL_STEPS) * 100)}%</span>
-          </div>
-          <div className="h-1.5 w-full rounded-full bg-bg-card overflow-hidden">
-            <div
-              className="h-full rounded-full bg-gradient-brand transition-all duration-300"
-              style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
-            />
-          </div>
+  function goBack() {
+    if (current > 0) setCurrent(current - 1)
+    else setStage('intro')
+  }
+
+  function finish() {
+    const cap = parseFloat(capital)
+    if (isNaN(cap) || cap <= 0) return
+    const profileResult = calculateProfile(answers)
+    const portfolio = buildPortfolio({
+      profile: profileResult.profile,
+      capital: cap,
+      currency,
+      horizon: profileResult.horizon,
+    })
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('portfolio', JSON.stringify(portfolio))
+      localStorage.setItem('investorProfile', JSON.stringify(profileResult))
+    }
+    setResult(profileResult)
+    setStage('loading')
+    setTimeout(() => setStage('result'), 2500)
+  }
+
+  const page: React.CSSProperties = {
+    minHeight: '100vh',
+    background: COLORS.base,
+    color: COLORS.text,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '24px',
+    fontFamily: "'DM Sans', sans-serif",
+  }
+  const cardStyle: React.CSSProperties = {
+    width: '100%',
+    maxWidth: 560,
+    background: COLORS.card,
+    border: `1px solid ${COLORS.border}`,
+    borderRadius: 16,
+    padding: 32,
+  }
+  const primaryBtn: React.CSSProperties = {
+    background: COLORS.blue,
+    color: COLORS.base,
+    border: 'none',
+    borderRadius: 8,
+    padding: '12px 24px',
+    fontSize: 15,
+    fontWeight: 600,
+    cursor: 'pointer',
+  }
+
+  // ───────── intro ─────────
+  if (stage === 'intro') {
+    return (
+      <div style={page}>
+        <div style={{ ...cardStyle, textAlign: 'center' }}>
+          <div style={{ fontSize: 56, marginBottom: 16 }}>🧭</div>
+          <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: 28, fontWeight: 700, margin: '0 0 8px' }}>
+            Armemos tu cartera personalizada
+          </h1>
+          <p style={{ color: COLORS.muted, fontSize: 16, margin: '0 0 28px' }}>8 preguntas, 2 minutos.</p>
+          <button style={primaryBtn} onClick={() => setStage('questions')}>
+            Empecemos
+          </button>
         </div>
+      </div>
+    )
+  }
 
-        <div className="card p-8">
-          {step === 1 && (
-            <>
-              <h1 className="text-2xl font-display font-bold text-text-primary mb-1">¿Cuánto capital tenés disponible?</h1>
-              <p className="text-sm text-text-secondary mb-6">Esto nos ayuda a contextualizar tu portafolio.</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {CAPITAL_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setCapital(opt.value)}
-                    className={cn(
-                      'text-left rounded-card border p-4 transition-all',
-                      capital === opt.value
-                        ? 'border-accent-blue bg-accent-blue/5 shadow-blue'
-                        : 'border-border bg-bg-base hover:border-border-light'
-                    )}
-                  >
-                    <p className="font-num text-lg font-semibold text-text-primary">{opt.label}</p>
-                    <p className="text-xs text-text-secondary mt-1">{opt.desc}</p>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
+  // ───────── questions ─────────
+  if (stage === 'questions') {
+    const q = QUESTIONS[current]
+    const progress = ((current + 1) / QUESTIONS.length) * 100
+    const selected = answers[q.id]
+    return (
+      <div style={page}>
+        <div style={cardStyle}>
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: 13, color: COLORS.muted }}>{q.step}</span>
+              <span style={{ fontSize: 13, color: COLORS.blue, fontFamily: "'Space Grotesk', sans-serif" }}>
+                {Math.round(progress)}%
+              </span>
+            </div>
+            <div style={{ height: 6, background: COLORS.base, borderRadius: 3, overflow: 'hidden' }}>
+              <div
+                style={{
+                  height: '100%',
+                  width: `${progress}%`,
+                  background: `linear-gradient(135deg, ${COLORS.blue}, ${COLORS.gold})`,
+                  transition: 'width 0.3s',
+                }}
+              />
+            </div>
+          </div>
 
-          {step === 2 && (
-            <>
-              <h1 className="text-2xl font-display font-bold text-text-primary mb-1">¿Cuál es tu tolerancia al riesgo?</h1>
-              <p className="text-sm text-text-secondary mb-6">Definí cuánta volatilidad estás dispuesto a aceptar.</p>
-              <div className="space-y-3">
-                {RISK_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setRisk(opt.value)}
-                    className={cn(
-                      'w-full text-left rounded-card border p-4 transition-all',
-                      risk === opt.value
-                        ? 'border-accent-blue bg-accent-blue/5 shadow-blue'
-                        : 'border-border bg-bg-base hover:border-border-light'
-                    )}
-                  >
-                    <p className="font-display font-semibold text-text-primary">{opt.label}</p>
-                    <p className="text-xs text-text-secondary mt-1">{opt.desc}</p>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
+          <div style={{ fontSize: 40, marginBottom: 8 }}>{q.emoji}</div>
+          <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 22, fontWeight: 700, margin: '0 0 6px' }}>
+            {q.title}
+          </h2>
+          <p style={{ color: COLORS.muted, fontSize: 14, margin: '0 0 20px' }}>{q.hint}</p>
 
-          {step === 3 && (
-            <>
-              <h1 className="text-2xl font-display font-bold text-text-primary mb-1">¿Cuál es tu horizonte temporal?</h1>
-              <p className="text-sm text-text-secondary mb-6">El plazo en el que pensás mantener tus inversiones.</p>
-              <div className="space-y-3">
-                {TIMEFRAME_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setTimeframe(opt.value)}
-                    className={cn(
-                      'w-full text-left rounded-card border p-4 transition-all',
-                      timeframe === opt.value
-                        ? 'border-accent-blue bg-accent-blue/5 shadow-blue'
-                        : 'border-border bg-bg-base hover:border-border-light'
-                    )}
-                  >
-                    <p className="font-display font-semibold text-text-primary">{opt.label}</p>
-                    <p className="text-xs text-text-secondary mt-1">{opt.desc}</p>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {q.options.map(([label, score]) => {
+              const active = selected === score
+              return (
+                <button
+                  key={label}
+                  onClick={() => selectOption(score)}
+                  style={{
+                    textAlign: 'left',
+                    padding: '14px 16px',
+                    borderRadius: 10,
+                    border: `1px solid ${active ? COLORS.blue : COLORS.border}`,
+                    background: active ? 'rgba(79,163,255,0.08)' : COLORS.base,
+                    color: COLORS.text,
+                    fontSize: 15,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = COLORS.blue
+                    e.currentTarget.style.background = 'rgba(79,163,255,0.08)'
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) {
+                      e.currentTarget.style.borderColor = COLORS.border
+                      e.currentTarget.style.background = COLORS.base
+                    }
+                  }}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
 
-          {step === 4 && (
-            <>
-              <h1 className="text-2xl font-display font-bold text-text-primary mb-1">¿Cuáles son tus objetivos?</h1>
-              <p className="text-sm text-text-secondary mb-6">Podés seleccionar más de uno.</p>
-              <div className="space-y-3">
-                {GOAL_OPTIONS.map((opt) => {
-                  const selected = goals.includes(opt.value)
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => toggleGoal(opt.value)}
-                      className={cn(
-                        'w-full flex items-center gap-3 text-left rounded-card border p-4 transition-all',
-                        selected
-                          ? 'border-accent-blue bg-accent-blue/5 shadow-blue'
-                          : 'border-border bg-bg-base hover:border-border-light'
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          'flex h-5 w-5 shrink-0 items-center justify-center rounded border',
-                          selected ? 'border-accent-blue bg-accent-blue text-bg-base' : 'border-border'
-                        )}
-                      >
-                        {selected && (
-                          <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-7.5 7.5a1 1 0 01-1.4 0L3.3 9.7a1 1 0 011.4-1.4l3.3 3.3 6.8-6.8a1 1 0 011.4 0z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </span>
-                      <span className="font-medium text-text-primary">{opt.label}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </>
-          )}
+          <button
+            onClick={goBack}
+            style={{
+              marginTop: 20,
+              background: 'transparent',
+              border: 'none',
+              color: COLORS.muted,
+              fontSize: 14,
+              cursor: 'pointer',
+            }}
+          >
+            ← Atrás
+          </button>
+        </div>
+      </div>
+    )
+  }
 
-          <div className="mt-8 flex items-center justify-between gap-3">
-            <Button
-              variant="ghost"
-              onClick={() => setStep((s) => Math.max(1, s - 1))}
-              disabled={step === 1}
+  // ───────── capital ─────────
+  if (stage === 'capital') {
+    const cap = parseFloat(capital)
+    const valid = !isNaN(cap) && cap > 0
+    return (
+      <div style={page}>
+        <div style={cardStyle}>
+          <div style={{ fontSize: 40, marginBottom: 8 }}>💰</div>
+          <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 22, fontWeight: 700, margin: '0 0 6px' }}>
+            ¿Cuánto querés invertir?
+          </h2>
+          <p style={{ color: COLORS.muted, fontSize: 14, margin: '0 0 20px' }}>
+            Elegí la moneda y el monto a destinar a esta cartera.
+          </p>
+
+          <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+            {(['ARS', 'USD'] as const).map((c) => {
+              const active = currency === c
+              return (
+                <button
+                  key={c}
+                  onClick={() => setCurrency(c)}
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    borderRadius: 10,
+                    border: `1px solid ${active ? COLORS.blue : COLORS.border}`,
+                    background: active ? 'rgba(79,163,255,0.08)' : COLORS.base,
+                    color: active ? COLORS.text : COLORS.muted,
+                    fontSize: 15,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {c === 'ARS' ? 'Pesos (ARS)' : 'Dólares (USD)'}
+                </button>
+              )
+            })}
+          </div>
+
+          <input
+            type="number"
+            value={capital}
+            onChange={(e) => setCapital(e.target.value)}
+            placeholder={currency === 'ARS' ? '1.000.000' : '5.000'}
+            style={{
+              width: '100%',
+              padding: '14px 16px',
+              borderRadius: 10,
+              border: `1px solid ${COLORS.border}`,
+              background: COLORS.base,
+              color: COLORS.text,
+              fontSize: 18,
+              fontFamily: "'Space Grotesk', sans-serif",
+              outline: 'none',
+              marginBottom: 24,
+            }}
+          />
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <button
+              onClick={() => {
+                setStage('questions')
+                setCurrent(QUESTIONS.length - 1)
+              }}
+              style={{ background: 'transparent', border: 'none', color: COLORS.muted, fontSize: 14, cursor: 'pointer' }}
             >
-              Atrás
-            </Button>
-            <Button variant={step === TOTAL_STEPS ? 'gold' : 'primary'} onClick={handleNext} disabled={!canContinue}>
-              {step === TOTAL_STEPS ? 'Finalizar' : 'Siguiente'}
-            </Button>
+              ← Atrás
+            </button>
+            <button
+              onClick={finish}
+              disabled={!valid}
+              style={{ ...primaryBtn, background: COLORS.gold, opacity: valid ? 1 : 0.5, cursor: valid ? 'pointer' : 'not-allowed' }}
+            >
+              Armar mi cartera
+            </button>
           </div>
         </div>
+      </div>
+    )
+  }
+
+  // ───────── loading ─────────
+  if (stage === 'loading') {
+    return (
+      <div style={page}>
+        <div style={{ ...cardStyle, textAlign: 'center' }}>
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              margin: '0 auto 20px',
+              border: `4px solid ${COLORS.border}`,
+              borderTopColor: COLORS.blue,
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite',
+            }}
+          />
+          <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 700, margin: '0 0 6px' }}>
+            Armando tu cartera personalizada…
+          </h2>
+          <p style={{ color: COLORS.muted, fontSize: 14 }}>Estamos seleccionando los instrumentos para tu perfil.</p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      </div>
+    )
+  }
+
+  // ───────── result ─────────
+  const info = result ? PROFILES[result.profile] : null
+  return (
+    <div style={page}>
+      <div style={{ ...cardStyle, textAlign: 'center' }}>
+        <div style={{ fontSize: 56, marginBottom: 12 }}>{info?.emoji}</div>
+        <p style={{ color: COLORS.muted, fontSize: 14, margin: '0 0 4px' }}>Tu perfil de inversor es</p>
+        <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: 30, fontWeight: 700, margin: '0 0 8px', color: info?.color }}>
+          {info?.label}
+        </h1>
+        <p style={{ color: COLORS.text, fontSize: 16, margin: '0 0 28px', maxWidth: 420, marginLeft: 'auto', marginRight: 'auto' }}>
+          {info?.tagline}
+        </p>
+        <button style={{ ...primaryBtn, background: COLORS.green }} onClick={() => router.push('/dashboard')}>
+          Ver mi cartera →
+        </button>
       </div>
     </div>
   )
