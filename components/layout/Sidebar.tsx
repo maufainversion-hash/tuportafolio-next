@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { href: '/portfolio', label: 'Portafolio', icon: '💼' },
   { href: '/dashboard#lucas', label: 'Lucas', icon: '🤖' },
   { href: '/settings', label: 'Configuración', icon: '⚙️' },
+  { href: '/onboarding', label: 'Nuevo test', icon: '🔄' },
 ]
 
 export default function Sidebar() {
@@ -19,7 +20,9 @@ export default function Sidebar() {
         <div className="w-8 h-8 rounded-lg bg-gradient-brand flex items-center justify-center">
           <span className="text-bg-base font-bold text-sm font-display">T</span>
         </div>
-        <span className="font-display font-semibold text-text-primary">TuPortafolioIA</span>
+        <span className="font-display font-semibold text-text-primary">
+          TuPortafolio<span style={{ color: '#f0b429', fontWeight: 700 }}>IA</span>
+        </span>
       </Link>
 
       <nav className="flex-1 px-3 py-4 space-y-1">

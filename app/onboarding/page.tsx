@@ -306,7 +306,8 @@ export default function OnboardingPage() {
   const info = result ? PROFILES[result.profile] : null
   return (
     <div style={page}>
-      <div style={{ ...cardStyle, textAlign: 'center' }}>
+      <div className="hero-card" style={{ width: '100%', maxWidth: 560, padding: 32, textAlign: 'center' }}>
+        <div style={{ position: 'relative', zIndex: 1 }}>
         <div style={{ fontSize: 56, marginBottom: 12 }}>{info?.emoji}</div>
         <p style={{ color: COLORS.muted, fontSize: 14, margin: '0 0 4px' }}>Tu perfil de inversor es</p>
         <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: 30, fontWeight: 700, margin: '0 0 8px', color: info?.color }}>
@@ -318,6 +319,7 @@ export default function OnboardingPage() {
         <button style={{ ...primaryBtn, background: COLORS.green }} onClick={() => router.push('/dashboard')}>
           Ver mi cartera →
         </button>
+        </div>
       </div>
     </div>
   )

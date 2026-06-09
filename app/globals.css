@@ -31,3 +31,61 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--font-syne), 'Syne', sans-serif; font-weig
 ::-webkit-scrollbar-track { background: var(--bg-base); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
+
+.metric-card {
+  background: #0f1623;
+  border: 1px solid rgba(99,120,180,0.18);
+  border-radius: 14px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.04) inset;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.metric-card:hover {
+  border-color: rgba(99,182,255,0.35);
+  box-shadow: 0 4px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,182,255,0.15), 0 1px 0 rgba(255,255,255,0.04) inset;
+}
+.metric-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+.metric-value {
+  font-family: 'Space Grotesk', monospace;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.metric-value-green { color: #22c55e; }
+.metric-value-amber { color: #f59e0b; }
+.metric-value-blue { color: #60a5fa; }
+.metric-value-white { color: #eef2ff; }
+
+.hero-card {
+  background: linear-gradient(135deg, #0f1623 0%, #0d1729 100%);
+  border: 1px solid rgba(99,120,180,0.22);
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6), 0 0 80px rgba(79,163,255,0.05), 0 1px 0 rgba(255,255,255,0.06) inset;
+  position: relative;
+  overflow: hidden;
+}
+.hero-card::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(240,180,41,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #eef2ff;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(99,120,180,0.18);
+  margin-bottom: 1rem;
+}

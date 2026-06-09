@@ -2,7 +2,6 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import MetricCard from '@/components/ui/MetricCard'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import { formatCurrency, formatPercent } from '@/lib/utils'
@@ -59,36 +58,44 @@ export default function PortfolioPage() {
   return (
     <div className="max-w-6xl mx-auto px-2 py-2 space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
+      <div className="hero-card p-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="relative z-10">
           <h1 className="text-2xl font-display font-bold text-text-primary">Mi Portafolio</h1>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-2">
             <Badge variant="blue">
               {info.emoji} {info.label}
             </Badge>
             <Badge variant="success">Retorno esperado {formatPercent(portfolio.expectedReturnAnnual * 100)}/año</Badge>
           </div>
         </div>
-        <Button variant="secondary" onClick={() => router.push('/onboarding')}>
+        <Button variant="secondary" onClick={() => router.push('/onboarding')} className="relative z-10">
           Rehacer test
         </Button>
       </div>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard label="Capital" value={formatCurrency(portfolio.totalCapital, cur)} />
-        <MetricCard
-          label="Retorno anual"
-          value={formatPercent(portfolio.expectedReturnAnnual * 100)}
-          change={portfolio.expectedReturnAnnual * 100}
-        />
-        <MetricCard label="Proyección 3 años" value={formatCurrency(projection[3], cur)} />
-        <MetricCard label="Volatilidad" value={formatPercent(portfolio.weightedVolatility * 100)} />
+        <div className="metric-card p-5">
+          <span className="metric-label">Capital inicial</span>
+          <p className="metric-value metric-value-white mt-2">{formatCurrency(portfolio.totalCapital, cur)}</p>
+        </div>
+        <div className="metric-card p-5">
+          <span className="metric-label">Retorno anual</span>
+          <p className="metric-value metric-value-green mt-2">{formatPercent(portfolio.expectedReturnAnnual * 100)}</p>
+        </div>
+        <div className="metric-card p-5">
+          <span className="metric-label">Proyección 3 años</span>
+          <p className="metric-value metric-value-blue mt-2">{formatCurrency(projection[3], cur)}</p>
+        </div>
+        <div className="metric-card p-5">
+          <span className="metric-label">Volatilidad</span>
+          <p className="metric-value metric-value-amber mt-2">{formatPercent(portfolio.weightedVolatility * 100)}</p>
+        </div>
       </div>
 
       {/* Category distribution */}
       <div className="card p-6">
-        <h2 className="font-display font-semibold text-text-primary mb-4">Distribución por categoría</h2>
+        <h2 className="section-title">Distribución por categoría</h2>
         <div className="flex w-full h-3 rounded-full overflow-hidden mb-4">
           {categories.map((c) => (
             <div
@@ -111,7 +118,7 @@ export default function PortfolioPage() {
 
       {/* Projection table */}
       <div className="card p-6">
-        <h2 className="font-display font-semibold text-text-primary mb-4">Proyección estimada</h2>
+        <h2 className="section-title">Proyección estimada</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -148,7 +155,7 @@ export default function PortfolioPage() {
       <div className="card overflow-hidden">
         <div className="px-6 py-4 border-b border-border">
           <h2 className="font-display font-semibold text-text-primary">Posiciones ({portfolio.positions.length})</h2>
-        </div>
+        </div>{/* section header kept inline to preserve table border layout */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

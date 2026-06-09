@@ -93,9 +93,9 @@ export default function DashboardPage() {
       {portfolio && info ? (
         <button
           onClick={() => router.push('/portfolio')}
-          className="card p-6 w-full text-left hover:shadow-card transition-shadow"
+          className="hero-card p-6 w-full text-left"
         >
-          <div className="flex items-start justify-between gap-4">
+          <div className="relative z-10 flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant="blue">
@@ -103,10 +103,10 @@ export default function DashboardPage() {
                 </Badge>
                 <Badge variant="success">{formatPercent(portfolio.expectedReturnAnnual * 100)}/año esperado</Badge>
               </div>
-              <p className="font-num text-2xl font-semibold text-text-primary">
+              <p className="metric-value metric-value-white">
                 {formatCurrency(portfolio.totalCapital, portfolio.currency)}
               </p>
-              <p className="text-xs text-text-secondary mb-3">Capital invertido · {portfolio.positions.length} posiciones</p>
+              <p className="text-xs text-text-secondary mb-3 mt-1">Capital invertido · {portfolio.positions.length} posiciones</p>
               <div className="flex flex-wrap gap-1.5">
                 {topTickers.map((t) => (
                   <span key={t} className="font-num text-xs px-2 py-0.5 rounded bg-bg-base border border-border text-text-secondary">
@@ -119,12 +119,12 @@ export default function DashboardPage() {
           </div>
         </button>
       ) : (
-        <div className="card p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
+        <div className="hero-card p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="relative z-10">
             <h2 className="font-display font-semibold text-text-primary text-lg">Armá tu cartera</h2>
             <p className="text-sm text-text-secondary">Respondé 8 preguntas y te armamos una cartera a tu medida.</p>
           </div>
-          <Link href="/onboarding">
+          <Link href="/onboarding" className="relative z-10">
             <Button variant="gold">Empezar test</Button>
           </Link>
         </div>
