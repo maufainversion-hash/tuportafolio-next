@@ -2,11 +2,58 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ReferenceLine,
+  ResponsiveContainer,
+} from 'recharts'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
-import { cn, formatCurrency, formatPercent } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 import { PROFILES } from '@/lib/profiler'
 import type { BuiltPortfolio } from '@/lib/portfolio-engine'
+
+const CHART_GRID = 'rgba(99,120,180,0.1)'
+const AXIS_TEXT = '#64748b'
+const TOOLTIP_STYLE: React.CSSProperties = {
+  background: '#0f1623',
+  border: '1px solid rgba(99,120,180,0.22)',
+  borderRadius: 8,
+  color: '#eef2ff',
+  fontSize: 12,
+}
+
+function compactNum(v: number): string {
+  const abs = Math.abs(v)
+  if (abs >= 1e9) return `${(v / 1e9).toFixed(1)}B`
+  if (abs >= 1e6) return `${(v / 1e6).toFixed(1)}M`
+  if (abs >= 1e3) return `${(v / 1e3).toFixed(0)}k`
+  return String(Math.round(v))
+}
+
+interface EvoPoint {
+  date: string
+  value: number
+}
+
+// Simulated last-7-days evolution. Only called client-side (portfolio is loaded
+// from localStorage after mount), so new Date() never runs during SSR.
+function buildEvolution(p: BuiltPortfolio): EvoPoint[] {
+  const days = 7
+  const dailyR = p.expectedReturnAnnual / 252
+  return Array.from({ length: days }, (_, i) => {
+    const factor = (1 + dailyR * i) * (1 + 0.004 * Math.sin(i * 1.4))
+    const d = new Date()
+    d.setDate(d.getDate() - (days - 1 - i))
+    const label = d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })
+    return { date: label, value: p.totalCapital * factor }
+  })
+}
 
 interface ChatMsg {
   role: 'user' | 'assistant'
@@ -25,12 +72,19 @@ export default function DashboardPage() {
   const [messages, setMessages] = useState<ChatMsg[]>([GREETING])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [horizon, setHorizon] = useState<number | null>(null)
+  const [evoOpen, setEvoOpen] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem('portfolio')
       if (raw) setPortfolio(JSON.parse(raw))
+      const prof = localStorage.getItem('investorProfile')
+      if (prof) {
+        const parsed = JSON.parse(prof) as { horizon?: number }
+        if (typeof parsed.horizon === 'number') setHorizon(parsed.horizon)
+      }
     } catch {
       // ignore
     }
@@ -78,9 +132,10 @@ export default function DashboardPage() {
   }
 
   const info = portfolio ? PROFILES[portfolio.profile] : null
-  const topTickers = portfolio
-    ? [...portfolio.positions].sort((a, b) => b.weight - a.weight).slice(0, 5).map((p) => p.asset.ticker)
-    : []
+  const evoData = portfolio ? buildEvolution(portfolio) : []
+  const startValue = portfolio?.totalCapital ?? 0
+  const todayValue = evoData.length ? evoData[evoData.length - 1].value : startValue
+  const evoGain = todayValue - startValue
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
@@ -95,27 +150,44 @@ export default function DashboardPage() {
           onClick={() => router.push('/portfolio')}
           className="hero-card p-6 w-full text-left"
         >
-          <div className="relative z-10 flex items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant="blue">
+          <div className="relative z-10">
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-2">
+                <h2 className="font-display font-bold text-lg text-text-primary">Tu cartera</h2>
+                <span
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border"
+                  style={{ color: info.color, borderColor: `${info.color}55`, background: `${info.color}14` }}
+                >
                   {info.emoji} {info.label}
-                </Badge>
-                <Badge variant="success">{formatPercent(portfolio.expectedReturnAnnual * 100)}/año esperado</Badge>
+                </span>
               </div>
-              <p className="metric-value metric-value-white">
-                {formatCurrency(portfolio.totalCapital, portfolio.currency)}
-              </p>
-              <p className="text-xs text-text-secondary mb-3 mt-1">Capital invertido · {portfolio.positions.length} posiciones</p>
-              <div className="flex flex-wrap gap-1.5">
-                {topTickers.map((t) => (
-                  <span key={t} className="font-num text-xs px-2 py-0.5 rounded bg-bg-base border border-border text-text-secondary">
-                    {t}
-                  </span>
-                ))}
+              <span className="text-text-muted text-sm shrink-0">Ver cartera →</span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <span className="metric-label">Capital</span>
+                <p className="metric-value metric-value-white text-2xl mt-1">
+                  {formatCurrency(portfolio.totalCapital, portfolio.currency)}
+                </p>
+              </div>
+              <div>
+                <span className="metric-label">Horizonte</span>
+                <p className="font-display font-semibold text-text-primary text-lg mt-1">
+                  {horizon != null ? `${horizon} ${horizon === 1 ? 'año' : 'años'}` : '—'}
+                </p>
+              </div>
+              <div>
+                <span className="metric-label">Perfil</span>
+                <p className="font-display font-semibold text-lg mt-1" style={{ color: info.color }}>
+                  {info.label}
+                </p>
               </div>
             </div>
-            <span className="text-text-muted text-sm shrink-0">Ver cartera →</span>
+
+            <p className="text-[11px] text-text-muted mt-4">
+              Herramienta educativa · No reemplaza el asesoramiento de un profesional regulado
+            </p>
           </div>
         </button>
       ) : (
@@ -127,6 +199,64 @@ export default function DashboardPage() {
           <Link href="/onboarding" className="relative z-10">
             <Button variant="gold">Empezar test</Button>
           </Link>
+        </div>
+      )}
+
+      {/* Evolución de tu cartera */}
+      {portfolio && (
+        <div className="card p-6">
+          <button
+            onClick={() => setEvoOpen((v) => !v)}
+            className="section-title w-full flex items-center justify-between !mb-0 !border-0 !pb-0"
+          >
+            <span>📈 Evolución de tu cartera</span>
+            <span className="text-text-muted text-sm">{evoOpen ? '▲' : '▼'}</span>
+          </button>
+
+          {evoOpen && (
+            <div className="mt-4">
+              <div className="mb-4">
+                <p className="metric-label">Hoy tu cartera vale</p>
+                <p className="metric-value metric-value-blue text-3xl mt-1">
+                  {formatCurrency(todayValue, portfolio.currency)}
+                </p>
+                <p className="text-sm text-text-secondary mt-1">
+                  Hace 6 días pusiste {formatCurrency(startValue, portfolio.currency)}.{' '}
+                  <span className={evoGain >= 0 ? 'text-success' : 'text-danger'}>
+                    {evoGain >= 0 ? 'Ganaste' : 'Perdiste'} {formatCurrency(Math.abs(evoGain), portfolio.currency)}
+                  </span>
+                  .
+                </p>
+              </div>
+
+              <div style={{ height: 280 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={evoData} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+                    <CartesianGrid stroke={CHART_GRID} vertical={false} />
+                    <XAxis dataKey="date" tick={{ fill: AXIS_TEXT, fontSize: 12 }} axisLine={{ stroke: CHART_GRID }} tickLine={false} />
+                    <YAxis
+                      tick={{ fill: AXIS_TEXT, fontSize: 12 }}
+                      axisLine={false}
+                      tickLine={false}
+                      domain={['auto', 'auto']}
+                      tickFormatter={(v: number) => compactNum(v)}
+                    />
+                    <Tooltip
+                      contentStyle={TOOLTIP_STYLE}
+                      itemStyle={{ color: '#eef2ff' }}
+                      labelStyle={{ color: AXIS_TEXT }}
+                      formatter={(value) => formatCurrency(Number(value), portfolio.currency)}
+                    />
+                    <ReferenceLine y={startValue} stroke="#eef2ff" strokeDasharray="4 4" strokeOpacity={0.6} />
+                    <Line type="monotone" dataKey="value" stroke="#60a5fa" strokeWidth={2.5} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              <p className="text-xs text-text-muted mt-3">
+                Evolución simulada con fines ilustrativos. La línea punteada marca tu capital inicial.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
