@@ -20,12 +20,12 @@ import {
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import { formatCurrency, formatPercent } from '@/lib/utils'
-import { PROFILES } from '@/lib/profiler'
+import { PROFILES } from '@/lib/data/legacy-profiler'
 import {
   getCategoryWeights,
   projectPortfolio,
   type BuiltPortfolio,
-} from '@/lib/portfolio-engine'
+} from '@/lib/data/legacy-engine'
 
 // Metadata keyed by the real category names produced by the asset universe.
 const CATEGORY_META: Record<string, { color: string; desc: string }> = {

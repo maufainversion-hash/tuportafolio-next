@@ -1,8 +1,8 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { QUESTIONS, calculateProfile, PROFILES, type ProfileResult } from '@/lib/profiler'
-import { buildPortfolio } from '@/lib/portfolio-engine'
+import { QUESTIONS, calculateProfile, PROFILES, type ProfileResult } from '@/lib/data/legacy-profiler'
+import { buildPortfolio } from '@/lib/data/legacy-engine'
 
 type Stage = 'intro' | 'questions' | 'capital' | 'loading' | 'result'
 

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit -q -m 'feat: market data, profiler, portfolio engine, Lucas AI — full technical backend *)",
+      "Bash(git push *)"
+    ]
+  }
+}

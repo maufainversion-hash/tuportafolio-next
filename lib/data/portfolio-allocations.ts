@@ -1,4 +1,4 @@
-import type { InvestorProfile } from '@/lib/profiler'
+import type { InvestorProfile } from './legacy-profiler'
 
 export interface AllocationSlot {
   assetId: string

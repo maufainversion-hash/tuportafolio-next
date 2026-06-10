@@ -15,8 +15,8 @@ import {
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import { cn, formatCurrency } from '@/lib/utils'
-import { PROFILES } from '@/lib/profiler'
-import type { BuiltPortfolio } from '@/lib/portfolio-engine'
+import { PROFILES } from '@/lib/data/legacy-profiler'
+import type { BuiltPortfolio } from '@/lib/data/legacy-engine'
 
 const CHART_GRID = 'rgba(99,120,180,0.1)'
 const AXIS_TEXT = '#64748b'
